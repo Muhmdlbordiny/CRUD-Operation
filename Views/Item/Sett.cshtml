@@ -1,0 +1,35 @@
+﻿<table class="table table-bordered table-hover">
+    <thead class="alert alert-info">
+        <tr>
+            <th>
+                Name
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var item in Model)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td><button class="btn btn-outline-warning rounded-pill editBtn" data-id="@item.Id">Edit</button></td>
+                <td><a class="btn btn-outline-warning rounded-pill deleteBtn" asp-controller="Item" asp-action="Delete" asp-route-id="@item.Id">Delete</a> </td>
+                <td><button class="btn btn-outline-info rounded-pill info" data-bs-toggle="modal" data-bs-target="#exampleModal" data-id="@item.Id">Info</button></td>
+            </tr>
+        }
+    </tbody>
+</table>
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel"></h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <ul id="list">
+            </ul>
+        </div>
+
+    </div>
+</div>
+</div>

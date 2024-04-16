@@ -1,0 +1,28 @@
+﻿<table class="table table-bordered  table table-hover">
+	<thead class="alert alert-info">
+		<tr>
+			<th>
+				Id
+			</th>
+			<th>
+				Store Name
+			</th>
+			<th>
+				Item Name
+			</th>
+			<th> Quantity</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var item in Model)
+		{
+			<tr>
+				<td>@item.InvoiceId</td>
+				<td>@item.About.StoreName</td>
+				<td>@item.About.ItemName</td>
+				<td>@item.About.Quantity</td>
+			</tr>
+		}
+	</tbody>
+</table>
+

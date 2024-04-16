@@ -1,0 +1,220 @@
+﻿@model IEnumerable<InvoiceInfoViewModel>
+@{
+	ViewData["Title"] = "Invoices";
+}
+<h1 class="text-center">Invoices</h1>
+@*search*@
+<label for="search">Search:</label>
+<input type="text" class="form-control" id="search">
+@*Table*@
+<div id="table">
+	@Html.Partial("Sett", Model)
+</div>
+<button class="btn btn-primary" id="add">Add New Invoice</button>
+
+<div id="addComponent" class="d-none">
+	<div class="row">
+		<div class="col-md-4">
+			<div class="form-group">
+				<label class="control-label"> Select Store</label>
+				<select name="stores" class="form-control" asp-items="@ViewBag.stores" id="store">
+					<option disabled selected>--- SELECT ---</option>
+				</select>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-4">
+			<div class="form-group">
+				<label class="control-label"> Select Item</label>
+				<select name="stores" class="form-control" asp-items="@ViewBag.items" id="item">
+					<option disabled selected>--- SELECT ---</option>
+
+				</select>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="form-group">
+				<label class="control-label"> Quantity</label>
+				<input type="number" min="1" id="quantity" class="form-control" />
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="form-group">
+				<label class="control-label"> Available</label>
+				<input type="number" id="available" class="form-control" disabled />
+
+			</div>
+		</div>
+	</div>
+	<button class="btn btn-outline-dark" onclick="save()">Save</button>
+	<button class="btn btn-link" onclick="cancel()">Cancel</button>
+
+</div>
+
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/jquery/dist/jquery-ui.js"></script>
+
+<script>
+
+	//update table
+	function Update() {
+		$.ajax({
+			type: "GET",
+			url: "Invoice/GetData",  // Replace "Controller" with the name of your controller
+			success: function (data) {
+				// Update the table with the new data
+				$("#table").html(data);
+
+			},
+			error: function () {
+				// Handle the error if the request fails
+				alert("Failed to get data from the server.");
+			}
+		});
+	}
+	//add new Invoice button
+	$("#add").on("click", function () {
+		$("#add").hide(500);
+		//$('button').attr('disabled', true);
+		$('#search').val('');
+
+		$("#addComponent").removeClass('d-none');
+
+
+	})
+	//cancel
+	function cancel() {
+		$("#addComponent").addClass('d-none');
+		$('select').val('--- SELECT ---');
+		$('input').val('');
+		$("#add").show(500);
+
+		//$('button').attr('disabled', false);
+
+	}
+	//save new Invoice
+	function save() {
+		//validation
+		if (input1.val() == null || input2.val() == null || $("#quantity").val() == '') {
+			alert("make sure to fill form");
+		}
+		else {
+			//ajax
+			$.ajax({
+				url: "/Invoice/Save", // URL to request
+				type: "POST", // HTTP method to use for the request
+				data: JSON.stringify({ // Data to send with the request
+					StoreId: input2.val(),
+					ItemId: input1.val(),
+					Quantity: $("#quantity").val()
+				}),
+				dataType: "json", // Data type expected in the response
+				contentType: 'application/json',
+				success: function (response) {
+					// Callback function to handle a successful response
+					console.log(response);
+					Update();
+					$("#add").show(500);
+					$("#addComponent").addClass('d-none');
+					$('select').val('--- SELECT ---');
+					$('input').val('');
+					//$('button').attr('disabled', false);
+
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					// Callback function to handle an error response
+					console.log(textStatus + ": " + errorThrown);
+				}
+			})
+		}
+
+	}
+
+
+
+	//$("#item").on('change', function () {
+	//	var selectedValue = $(this).val();
+	//	console.log(selectedValue)
+	//	//$("#output").text("You selected: " + selectedValue);
+	//});
+	function chechAvailable() {
+		$.ajax({
+			url: "/Invoice/Available", // URL to request
+			type: "POST", // HTTP method to use for the request
+			data: JSON.stringify({ // Data to send with the request
+				ItemId: input1.val(),
+				StoreId: input2.val()
+			}),
+			dataType: "json", // Data type expected in the response
+			contentType: 'application/json',
+			success: function (response) {
+				// Callback function to handle a successful response
+				console.log(response);
+				$("#available").val(response);
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				// Callback function to handle an error response
+				console.log(textStatus + ": " + errorThrown);
+			}
+		})
+	}
+
+	var input1 = $('#item');
+	var input2 = $('#store');
+
+	// Add a change event listener to both inputs
+	$(input1).add(input2).change(function () {
+		// Check which input has changed
+		if (this === input1[0]) {
+
+			if (input1.val() != null && input2.val() != null)
+				chechAvailable();
+
+		} else if (this === input2[0]) {
+
+			if (input1.val() != null && input2.val() != null)
+				chechAvailable();
+		}
+	});
+
+
+	//autocomplate in search
+	$("#search").autocomplete({
+		source: '@Url.Action("AutoComplate")',
+
+		select: function (event, ui) {
+			// Get the selected value and do something with it
+			var selectedValue = ui.item.value;
+			$.ajax({
+				url: "/Invoice/Search/data", // URL to request
+				type: "GET", // HTTP method to use for the request
+				data: { // Data to send with the request
+					text: selectedValue
+				},
+				success: function (response) {
+					// Callback function to handle a successful response
+					$("#table").html(response);
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					// Callback function to handle an error response
+					console.log(textStatus + ": " + errorThrown);
+				}
+			})
+		},
+	});
+	//clear search
+	$("#search").on('keyup', function () {
+		if ($("#search").val().trim() === "") {
+			Update();
+		}
+	});
+
+
+
+
+
+
+</script>

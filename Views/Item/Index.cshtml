@@ -1,0 +1,255 @@
+﻿@model IEnumerable<Item>
+@{
+	ViewData["Title"] = "Items";
+}
+<h1 class="text-center">Items</h1>
+
+@*search*@
+<label for="search">Search:</label>
+<input type="text" class="form-control" id="search">
+
+@*Table*@
+<div id="table">
+	@Html.Partial("sett", Model)
+</div>
+<button class="btn btn-primary" id="add">Add New Item</button>
+
+@*<div class="form-control d-flex " id="addComponent">
+	<input type="text" class="form-control" placeholder="Name" />
+	<input type="text" class="form-control" placeholder="Address" />
+	<button class="btn btn-outline-info rounded-pill" onclick="save()" id="save">Save</button>
+	<button class="btn btn-link" id="cancle" onclick="cancel()">cancle</button>
+</div>*@
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/jquery/dist/jquery-ui.js"></script>
+
+<script>
+
+	var addComponent = `<tr id="addComponent">
+								<td><input type="text" class="form-control" placeholder="Name" id="name" /></td>
+
+								<td><button class="btn btn-outline-info rounded-pill" onclick="save()" id="save">Save</button></td>
+										<td><button class="btn btn-link" id="cancle" onclick="cancel()">Cancel</button></td>
+
+								<td></td>
+								</tr>`;
+	var editComponent = `<tr id="editComponent">
+									<td><input type="text" class="form-control" placeholder="Name" id="name" /></td>
+									<td><button class="btn btn-outline-info rounded-pill" onclick="edit()" id="save">Save</button></td>
+											<td><button class="btn btn-link" id="cancle" onclick="cancelEdit()">Cancel</button></td>
+									<td><input type="hidden" class="form-control" placeholder="" id="id"/></td>
+									</tr>`;
+
+	//update table
+	function Update() {
+		$.ajax({
+			type: "GET",
+			url: "Item/GetData",  // Replace "Controller" with the name of your controller
+			success: function (data) {
+				console.log(data);
+				// Update the table with the new data
+				$("#table").html(data);
+
+			},
+			error: function () {
+				// Handle the error if the request fails
+				alert("Failed to get data from the server.");
+			}
+		});
+	}
+	//add new Item button
+	$("#add").on("click", function () {
+		$("#add").hide(500);
+		$('button').attr('disabled', true);
+		$('#search').val('');
+
+		$("table").append(addComponent);
+
+
+	})
+	//cancel
+	function cancel() {
+		$("#add").show(500);
+		$("#addComponent").remove();
+		$('button').attr('disabled', false);
+
+	}
+	//save new Item
+	function save() {
+		//validation
+		if ($("#name").val().trim() == '') {
+			alert("make sure to fill form");
+		}
+		else {
+			//ajax
+			$.ajax({
+				url: "/Item/Save", // URL to request
+				type: "POST", // HTTP method to use for the request
+				data: JSON.stringify({ // Data to send with the request
+					Name: $("#name").val()
+				}),
+				dataType: "json", // Data type expected in the response
+				contentType: 'application/json',
+				success: function (response) {
+					// Callback function to handle a successful response
+					Update();
+					$("#add").show(500);
+					$("#newrow").remove();
+					$('button').attr('disabled', false);
+
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					// Callback function to handle an error response
+					console.log(textStatus + ": " + errorThrown);
+				}
+			})
+		}
+	}
+	//Delete record
+	//$(".deleteBtn").on("click",function(){
+	$(document).on('click', '.deleteBtn', function () {
+		var myid = $(this).data("id");
+		var element = $(this);
+		$.ajax({
+			url: "Item/Delete", // URL to request
+			type: "Get", // HTTP method to use for the request
+			data: { // Data to send with the request
+				id: myid
+			},
+			dataType: "json", // Data type expected in the response
+			success: function (response) {
+				Update()
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				console.log(textStatus + ": " + errorThrown);
+			}
+		});
+
+	})
+
+
+	//edit record
+	$(document).on('click', '.editBtn', function () {
+		var id = $(this).data("id");
+		var name = $(this).closest('tr').find('td:nth-child(1)').text();
+		var address = $(this).closest('tr').find('td:nth-child(2)').text();
+		//console.log(name+" "+ address)
+		$('button').attr('disabled', true);
+		$(this).closest('tr').after(editComponent)
+		$('#name').val(name);
+		$('#address').val(address);
+		$('#id').val(id);
+		//$('.editBtn').attr('disabled', true);
+
+
+	})
+	//edit cancle btn
+	function cancelEdit() {
+		$('button').attr('disabled', false);
+		$("#editComponent").remove();
+	}
+	//save editted data
+	function edit() {
+		//validation
+		if ($("#name").val().trim() == '') {
+			alert("make sure to fill form");
+		}
+		else {
+			$.ajax({
+				url: "/Item/Edit", // URL to request
+				type: "POST", // HTTP method to use for the request
+				data: JSON.stringify({ // Data to send with the request
+					Id: $("#id").val(),
+					Name: $("#name").val()
+				}),
+				dataType: "json", // Data type expected in the response
+				contentType: 'application/json',
+				success: function (response) {
+					// Callback function to handle a successful response
+					console.log(response);
+					Update();
+					$('button').attr('disabled', false);
+					$("#editComponent").remove();
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					// Callback function to handle an error response
+					console.log(textStatus + ": " + errorThrown);
+				}
+			})
+		}
+	}
+
+
+	//information of item
+	$(document).on('click', '.info', function () {
+		var id = $(this).data("id");
+		//clear module
+		$("#list").text('');
+		$("#exampleModalLabel").text('');
+		$.ajax({
+			url: "/Item/Info/" + id, // URL to request
+			type: "GET", // HTTP method to use for the request
+			dataType: "json", // Data type expected in the response
+
+			success: function (response) {
+				// Callback function to handle a successful response
+				var itemname = response.itemName;
+				$("#exampleModalLabel").append(itemname)
+				if (response.about.length == 0) {
+
+					$("#list").append("not valid")
+				}
+				else {
+
+					for (let i = 0; i < response.about.length; i++) {
+						var storeName = response.about[i].storeName;
+						var quant = response.about[i].quantity;
+						var information = `<li><span>${storeName}</span> : <span>${quant} pieces</span></li>`
+						$("#list").append(information)
+					}
+				}
+
+
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				// Callback function to handle an error response
+				console.log(textStatus + ": " + errorThrown);
+			}
+		});
+
+	})
+
+	//autocomplate in search
+	$("#search").autocomplete({
+		source: '@Url.Action("AutoComplate")',
+		minLength: 1,
+		select: function (event, ui) {
+			// Get the selected value and do something with it
+			var selectedValue = ui.item.value;
+			$.ajax({
+				url: "/Item/Search/data", // URL to request
+				type: "GET", // HTTP method to use for the request
+				data: { // Data to send with the request
+					text: selectedValue
+				},
+				success: function (response) {
+					// Callback function to handle a successful response
+					$("#table").html(response);
+				},
+				error: function (jqXHR, textStatus, errorThrown) {
+					// Callback function to handle an error response
+					console.log(textStatus + ": " + errorThrown);
+				}
+			})
+		},
+	});
+	//clear search
+	$("#search").on('keyup', function () {
+		if ($("#search").val().trim() === "") {
+			Update();
+		}
+	});
+</script>
+
